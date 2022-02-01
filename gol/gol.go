@@ -8,14 +8,17 @@ import (
 )
 
 type GameOfLife struct {
-	cells      [][]int
-	generation int
+	cells [][]int
 
 	cols         int
 	rows         int
 	windowWidth  int
 	windowHeight int
 	blockSize    int
+
+	mouseCellX int
+	mouseCellY int
+	running    bool
 }
 
 func NewGame(windowWidth, windowsHeight, blockSize int) *GameOfLife {
@@ -38,44 +41,37 @@ func NewGame(windowWidth, windowsHeight, blockSize int) *GameOfLife {
 		blockSize:    blockSize,
 		rows:         rows,
 		cols:         cols,
+		running:      false,
 	}
 }
 
-func (g *GameOfLife) Render() {
+func (g *GameOfLife) Draw() {
+	rl.DrawRectangle(int32(g.mouseCellX*g.blockSize), int32(g.mouseCellY*g.blockSize), int32(g.blockSize), int32(g.blockSize), rl.Purple)
+
 	for y := 0; y < g.rows; y++ {
 		for x := 0; x < g.cols; x++ {
 			if g.cells[y][x] == 1 {
-				rl.DrawRectangle(int32(x*g.blockSize), int32(y*g.blockSize), int32(g.blockSize), int32(g.blockSize), rl.Green)
+				rl.DrawRectangle(int32(x*g.blockSize), int32(y*g.blockSize), int32(g.blockSize), int32(g.blockSize), rl.Black)
 			}
 		}
 	}
 
-	rl.DrawText(fmt.Sprintf("Generation: %d", g.generation), 10, 10, 20, rl.Black)
-	rl.DrawText(fmt.Sprintf("FPS: %.1f", rl.GetFPS()), 10, 30, 20, rl.Black)
+	rl.DrawText(fmt.Sprintf("FPS: %.1f", rl.GetFPS()), 10, 10, 20, rl.Black)
 }
 
 func (g *GameOfLife) GameLoop() {
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 
-		rl.ClearBackground(rl.Red)
+		rl.ClearBackground(rl.White)
 
-		mousePos := rl.GetMousePosition()
-		x := int(mousePos.X / float32(g.blockSize))
-		y := int(mousePos.Y / float32(g.blockSize))
-
-		rl.DrawRectangle(int32(x*g.blockSize), int32(y*g.blockSize), int32(g.blockSize), int32(g.blockSize), rl.Purple)
-
-		if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
-			g.cells[y][x] = 1
+		g.Draw()
+		if g.running {
+			g.Update()
 		}
-
-		g.Render()
-		g.Update()
+		g.Input()
 
 		rl.EndDrawing()
-
-		g.generation++
 	}
 
 }
@@ -96,40 +92,96 @@ func (g *GameOfLife) Update() {
 	g.cells = newCells
 }
 
-func (g *GameOfLife) updateCell(i, j int) int {
-	var count int
+func (g *GameOfLife) Input() {
+	if rl.IsKeyPressed(rl.KeySpace) {
+		g.running = !g.running
+	}
 
-	for x := -1; x <= 1; x++ {
-		for y := -1; y <= 1; y++ {
-			if x == 0 && y == 0 {
+	if rl.IsKeyPressed(rl.KeyC) {
+		g.ClearCells()
+	}
+
+	if rl.IsKeyPressed(rl.KeyR) {
+		g.RandomCells()
+	}
+
+	// Mouse position
+	mousePos := rl.GetMousePosition()
+	g.mouseCellX = Max(Min(int(mousePos.X/float32(g.blockSize)), g.cols-1), 0)
+	g.mouseCellY = Max(Min(int(mousePos.Y/float32(g.blockSize)), g.rows-1), 0)
+
+	if rl.IsMouseButtonDown(rl.MouseLeftButton) {
+		g.cells[g.mouseCellY][g.mouseCellX] = 1
+	} else if rl.IsMouseButtonDown(rl.MouseRightButton) {
+		g.cells[g.mouseCellY][g.mouseCellX] = 0
+	}
+}
+
+func (g *GameOfLife) updateCell(y, x int) int {
+	var neighborCount int
+
+	for dirX := -1; dirX <= 1; dirX++ {
+		for dirY := -1; dirY <= 1; dirY++ {
+			if dirX == 0 && dirY == 0 {
 				continue
 			}
 
-			if i+x < 0 || i+x >= g.rows {
-				continue
+			neighborX := x + dirX
+			neighborY := y + dirY
+
+			if neighborX < 0 {
+				neighborX += g.cols
 			}
 
-			if j+y < 0 || j+y >= g.cols {
-				continue
+			if neighborX >= g.cols {
+				neighborX -= g.cols
 			}
 
-			if g.cells[i+x][j+y] == 1 {
-				count++
+			if neighborY < 0 {
+				neighborY += g.rows
+			}
+
+			if neighborY >= g.rows {
+				neighborY -= g.rows
+			}
+
+			if g.cells[neighborY][neighborX] == 1 {
+				neighborCount++
 			}
 		}
 	}
 
-	if g.cells[i][j] == 1 {
-		if count < 2 || count > 3 {
+	if g.cells[y][x] == 1 {
+		if neighborCount < 2 || neighborCount > 3 {
 			return 0
 		} else {
 			return 1
 		}
 	} else {
-		if count == 3 {
+		if neighborCount == 3 {
 			return 1
 		} else {
 			return 0
+		}
+	}
+}
+
+func (g *GameOfLife) ClearCells() {
+	for y := 0; y < g.rows; y++ {
+		for x := 0; x < g.cols; x++ {
+			g.cells[y][x] = 0
+		}
+	}
+}
+
+func (g *GameOfLife) RandomCells() {
+	g.ClearCells()
+
+	for y := 0; y < g.rows; y++ {
+		for x := 0; x < g.cols; x++ {
+			if rand.Intn(2) == 1 {
+				g.cells[y][x] = 1
+			}
 		}
 	}
 }
