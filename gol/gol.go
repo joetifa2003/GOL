@@ -52,7 +52,7 @@ func NewGame(windowWidth, windowsHeight, blockSize, FPS int) *GameOfLife {
 }
 
 func (g *GameOfLife) Draw() {
-	rl.DrawRectangle(int32(g.mouseCellX*g.blockSize), int32(g.mouseCellY*g.blockSize), int32(g.blockSize), int32(g.blockSize), rl.Purple)
+	rl.DrawRectangle(int32(g.mouseCellX*g.blockSize), int32(g.mouseCellY*g.blockSize), int32(g.blockSize), int32(g.blockSize), rl.Fade(rl.Black, 0.75))
 
 	for y := 0; y < g.rows; y++ {
 		for x := 0; x < g.cols; x++ {
