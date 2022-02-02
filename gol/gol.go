@@ -18,10 +18,14 @@ type GameOfLife struct {
 
 	mouseCellX int
 	mouseCellY int
-	running    bool
+
+	running  bool
+	hideMenu bool
+
+	FPS int
 }
 
-func NewGame(windowWidth, windowsHeight, blockSize int) *GameOfLife {
+func NewGame(windowWidth, windowsHeight, blockSize, FPS int) *GameOfLife {
 	cells := [][]int{}
 	rows := windowsHeight / blockSize
 	cols := windowWidth / blockSize
@@ -42,6 +46,8 @@ func NewGame(windowWidth, windowsHeight, blockSize int) *GameOfLife {
 		rows:         rows,
 		cols:         cols,
 		running:      false,
+		hideMenu:     false,
+		FPS:          FPS,
 	}
 }
 
@@ -56,7 +62,30 @@ func (g *GameOfLife) Draw() {
 		}
 	}
 
-	rl.DrawText(fmt.Sprintf("FPS: %.1f", rl.GetFPS()), 10, 10, 20, rl.Black)
+	if !g.running {
+		if !g.hideMenu {
+			rl.DrawRectangle(0, 0, int32(g.windowWidth), int32(g.windowHeight), rl.Fade(rl.Black, 0.8))
+			pressStartWidth := rl.MeasureText("Press SPACE to start", 50)
+			rl.DrawText("Press SPACE to start", int32(g.windowWidth/2)-(pressStartWidth/2), int32(g.windowHeight/2)-150, 50, rl.White)
+
+			pressCWidth := rl.MeasureText("Press C to clear", 50)
+			rl.DrawText("Press C to clear", int32(g.windowWidth/2)-(pressCWidth/2), int32(g.windowHeight/2)-100, 50, rl.White)
+
+			pressRWidth := rl.MeasureText("Press R to randomize", 50)
+			rl.DrawText("Press R to randomize", int32(g.windowWidth/2)-(pressRWidth/2), int32(g.windowHeight/2)-50, 50, rl.White)
+
+			pressHWidth := rl.MeasureText("Press H to toggle menu", 50)
+			rl.DrawText("Press H to toggle menu", int32(g.windowWidth/2)-(pressHWidth/2), int32(g.windowHeight/2), 50, rl.White)
+
+			pressWWidth := rl.MeasureText("Press W to increase FPS", 50)
+			rl.DrawText("Press W to increase FPS", int32(g.windowWidth/2)-(pressWWidth/2), int32(g.windowHeight/2)+100, 50, rl.White)
+
+			pressSWidth := rl.MeasureText("Press S to decrease FPS", 50)
+			rl.DrawText("Press S to decrease FPS", int32(g.windowWidth/2)-(pressSWidth/2), int32(g.windowHeight/2)+150, 50, rl.White)
+		}
+	} else {
+		rl.DrawText(fmt.Sprintf("FPS: %.1f", rl.GetFPS()), 10, 10, 20, rl.Orange)
+	}
 }
 
 func (g *GameOfLife) GameLoop() {
@@ -103,6 +132,21 @@ func (g *GameOfLife) Input() {
 
 	if rl.IsKeyPressed(rl.KeyR) {
 		g.RandomCells()
+	}
+
+	if rl.IsKeyPressed(rl.KeyH) {
+		g.hideMenu = !g.hideMenu
+	}
+
+	if rl.IsKeyPressed(rl.KeyW) {
+		g.FPS += 10
+		rl.SetTargetFPS(int32(g.FPS))
+	}
+
+	if rl.IsKeyPressed(rl.KeyS) {
+		g.FPS -= 10
+		g.FPS = Max(g.FPS, 10)
+		rl.SetTargetFPS(int32(g.FPS))
 	}
 
 	// Mouse position
