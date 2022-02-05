@@ -8,10 +8,15 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
+// Actual window width size
 const WINDOW_WIDTH = 1280
 const WINDOW_HEIGHT = 720
-const BLOCK_SIZE = 15
-const FPS = 30
+
+// Individual block size
+const BLOCK_SIZE = 2
+
+// Max fps
+const FPS = 60
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
@@ -20,5 +25,6 @@ func main() {
 	rl.SetTargetFPS(FPS)
 
 	game := gol.NewGame(WINDOW_WIDTH, WINDOW_HEIGHT, BLOCK_SIZE, FPS)
+
 	game.GameLoop()
 }
