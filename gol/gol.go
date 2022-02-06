@@ -26,7 +26,6 @@ type GameOfLife struct {
 	FPS        int
 	camera     rl.Camera2D
 	mouseDelta rl.Vector2
-	vis        int
 }
 
 func NewGame(windowWidth, windowsHeight, blockSize, FPS int) *GameOfLife {
@@ -75,31 +74,20 @@ func (g *GameOfLife) Draw() {
 		g.camera.Target.Y-g.camera.Offset.Y,
 	)
 
-	g.vis = 0
+	arrayStartX := Max(int(int32(cameraWorld.X)/g.blockSize), 0)
+	arrayStartY := Max(int(int32(cameraWorld.Y)/g.blockSize), 0)
 
-	for y := 0; y < g.rows; y++ {
-		for x := 0; x < g.cols; x++ {
+	arrayEndX := Min(int(int32(cameraWorld.X+float32(g.windowWidth))/g.blockSize), g.cols)
+	arrayEndY := Min(int(int32(cameraWorld.Y+float32(g.windowHeight))/g.blockSize), g.rows)
+
+	for y := arrayStartY; y < arrayEndY; y++ {
+		for x := arrayStartX; x < arrayEndX; x++ {
 			if g.cells[y][x] == 1 {
-				if rl.CheckCollisionPointRec(
-					rl.NewVector2(
-						float32(int32(x)*g.blockSize),
-						float32(int32(y)*g.blockSize),
-					),
-					rl.NewRectangle(
-						cameraWorld.X,
-						cameraWorld.Y,
-						float32(g.windowWidth),
-						float32(g.windowHeight),
-					),
-				) {
-					g.vis += 1
-					rl.DrawRectangle(int32(x)*g.blockSize, int32(y)*g.blockSize, g.blockSize, g.blockSize, rl.Black)
-				}
+				rl.DrawRectangle(int32(x)*g.blockSize, int32(y)*g.blockSize, g.blockSize, g.blockSize, rl.Black)
 			}
 		}
 	}
 
-	// Draw border
 	borderThickness := 6
 	rl.DrawRectangleLinesEx(
 		rl.NewRectangle(-float32(borderThickness),
@@ -110,10 +98,11 @@ func (g *GameOfLife) Draw() {
 		float32(borderThickness),
 		rl.Fade(rl.Red, 0.5),
 	)
-
 }
 
 func (g *GameOfLife) DrawGUI() {
+	rl.DrawText(fmt.Sprintf("FPS: %0.f", rl.GetFPS()), 10, 10, 20, rl.Orange)
+
 	if !g.running {
 		if !g.hideMenu {
 			rl.DrawRectangle(0, 0, g.windowWidth, g.windowHeight, rl.Fade(rl.Black, 0.8))
@@ -135,8 +124,6 @@ func (g *GameOfLife) DrawGUI() {
 			pressSWidth := rl.MeasureText("Press S to decrease FPS", 50)
 			rl.DrawText("Press S to decrease FPS", g.windowWidth/2-pressSWidth/2, g.windowHeight/2+150, 50, rl.White)
 		}
-	} else {
-		rl.DrawText(fmt.Sprintf("FPS: %0.f", rl.GetFPS()), 10, 10, 20, rl.Orange)
 	}
 }
 
@@ -161,8 +148,6 @@ func (g *GameOfLife) GameLoop() {
 		rl.BeginMode2D(g.camera)
 		g.Draw()
 		rl.EndMode2D()
-
-		rl.DrawText(fmt.Sprintf("%d", g.vis), 10, g.windowHeight-50, 20, rl.DarkBrown)
 
 		g.DrawGUI()
 

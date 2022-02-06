@@ -13,7 +13,7 @@ const WINDOW_WIDTH = 1280
 const WINDOW_HEIGHT = 720
 
 // Individual block size
-const BLOCK_SIZE = 1
+const BLOCK_SIZE = 10
 
 // Max fps
 const FPS = 60
