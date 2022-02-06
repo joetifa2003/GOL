@@ -58,7 +58,7 @@ func NewGame(windowWidth, windowsHeight, blockSize, FPS int) *GameOfLife {
 		hideMenu:     false,
 		FPS:          FPS,
 		camera: rl.Camera2D{
-			Target:   centerOfScreen,
+			Target:   rl.NewVector2(0, 0),
 			Offset:   centerOfScreen,
 			Zoom:     1,
 			Rotation: 0,
@@ -69,18 +69,16 @@ func NewGame(windowWidth, windowsHeight, blockSize, FPS int) *GameOfLife {
 func (g *GameOfLife) Draw() {
 	rl.DrawRectangle(g.mouseCellX*g.blockSize, g.mouseCellY*g.blockSize, g.blockSize, g.blockSize, rl.Fade(rl.Black, 0.75))
 
-	cameraWorld := rl.NewVector2(
-		g.camera.Target.X-g.camera.Offset.X,
-		g.camera.Target.Y-g.camera.Offset.Y,
-	)
+	cameraStart := rl.GetScreenToWorld2D(rl.NewVector2(0, 0), g.camera)
+	fmt.Println(cameraStart)
+	cameraEnd := rl.GetScreenToWorld2D(rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight())), g.camera)
 
-	arrayStartX := Max(int(int32(cameraWorld.X)/g.blockSize), 0)
-	arrayStartY := Max(int(int32(cameraWorld.Y)/g.blockSize), 0)
+	cameraRect := rl.NewRectangle(cameraStart.X, cameraStart.Y, cameraEnd.X, cameraEnd.Y)
 
-	arrayEndX := Min(int(int32(cameraWorld.X+float32(g.windowWidth*int32(g.camera.Zoom)))/g.blockSize), g.cols)
-	arrayEndY := Min(int(int32(cameraWorld.Y+float32(g.windowHeight*int32(g.camera.Zoom)))/g.blockSize), g.rows)
-
-	fmt.Println(arrayEndX)
+	arrayStartX := Max(int(cameraRect.X/float32(g.blockSize)), 0)
+	arrayStartY := Max(int(cameraRect.Y/float32(g.blockSize)), 0)
+	arrayEndX := Min(int(cameraRect.Width/float32(g.blockSize)), g.cols)
+	arrayEndY := Min(int(cameraRect.Height/float32(g.blockSize)), g.rows)
 
 	for y := arrayStartY; y < arrayEndY; y++ {
 		for x := arrayStartX; x < arrayEndX; x++ {
