@@ -66,17 +66,21 @@ func (g *GameOfLife) Draw() {
 
 	cameraStart := rl.GetScreenToWorld2D(rl.NewVector2(0, 0), g.camera)
 	cameraEnd := rl.GetScreenToWorld2D(rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight())), g.camera)
-	cameraRect := rl.NewRectangle(cameraStart.X, cameraStart.Y, cameraEnd.X, cameraEnd.Y)
+	cameraSize := rl.Vector2Subtract(cameraEnd, cameraStart)
+	cameraRect := rl.NewRectangle(cameraStart.X, cameraStart.Y, cameraSize.X, cameraSize.Y)
 
-	arrayStartX := Max(int(cameraRect.X/float32(g.blockSize)), 0)
-	arrayStartY := Max(int(cameraRect.Y/float32(g.blockSize)), 0)
-	arrayEndX := Min(int(cameraRect.Width/float32(g.blockSize)), g.cols)
-	arrayEndY := Min(int(cameraRect.Height/float32(g.blockSize)), g.rows)
-
-	for y := arrayStartY; y < arrayEndY; y++ {
-		for x := arrayStartX; x < arrayEndX; x++ {
+	for y := 0; y < g.rows; y++ {
+		for x := 0; x < g.cols; x++ {
 			if g.cells[y][x] == 1 {
-				rl.DrawRectangle(int32(x)*g.blockSize, int32(y)*g.blockSize, g.blockSize, g.blockSize, rl.Black)
+				cellX := int32(x) * g.blockSize
+				cellY := int32(y) * g.blockSize
+
+				if float32(cellX) >= cameraRect.X &&
+					float32(cellX) <= cameraRect.X+cameraRect.Width &&
+					float32(cellY) >= cameraRect.Y &&
+					float32(cellY) <= cameraRect.Y+cameraRect.Height {
+					rl.DrawRectangle(cellX, cellY, g.blockSize, g.blockSize, rl.Black)
+				}
 			}
 		}
 	}
