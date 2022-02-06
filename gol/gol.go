@@ -11,11 +11,9 @@ import (
 type GameOfLife struct {
 	cells [][]int
 
-	cols         int
-	rows         int
-	windowWidth  int32
-	windowHeight int32
-	blockSize    int32
+	cols      int
+	rows      int
+	blockSize int32
 
 	mouseCellX int32
 	mouseCellY int32
@@ -23,9 +21,8 @@ type GameOfLife struct {
 	running  bool
 	hideMenu bool
 
-	FPS        int
-	camera     rl.Camera2D
-	mouseDelta rl.Vector2
+	FPS    int
+	camera rl.Camera2D
 }
 
 func NewGame(windowWidth, windowsHeight, blockSize, FPS int) *GameOfLife {
@@ -48,15 +45,13 @@ func NewGame(windowWidth, windowsHeight, blockSize, FPS int) *GameOfLife {
 	centerOfScreen := rl.NewVector2(float32(windowWidth/2), float32(windowsHeight/2))
 
 	return &GameOfLife{
-		cells:        cells,
-		windowWidth:  int32(windowWidth),
-		windowHeight: int32(windowsHeight),
-		blockSize:    int32(blockSize),
-		rows:         rows,
-		cols:         cols,
-		running:      false,
-		hideMenu:     false,
-		FPS:          FPS,
+		cells:     cells,
+		blockSize: int32(blockSize),
+		rows:      rows,
+		cols:      cols,
+		running:   false,
+		hideMenu:  false,
+		FPS:       FPS,
 		camera: rl.Camera2D{
 			Target:   centerOfScreen,
 			Offset:   centerOfScreen,
@@ -71,7 +66,6 @@ func (g *GameOfLife) Draw() {
 
 	cameraStart := rl.GetScreenToWorld2D(rl.NewVector2(0, 0), g.camera)
 	cameraEnd := rl.GetScreenToWorld2D(rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight())), g.camera)
-
 	cameraRect := rl.NewRectangle(cameraStart.X, cameraStart.Y, cameraEnd.X, cameraEnd.Y)
 
 	arrayStartX := Max(int(cameraRect.X/float32(g.blockSize)), 0)
@@ -92,8 +86,8 @@ func (g *GameOfLife) Draw() {
 		rl.NewRectangle(
 			-float32(borderThickness),
 			-float32(borderThickness),
-			float32(g.windowWidth+int32(borderThickness*2)),
-			float32(g.windowHeight+int32(borderThickness*2)),
+			float32(int32(rl.GetScreenWidth())+int32(borderThickness*2)),
+			float32(int32(rl.GetScreenHeight())+int32(borderThickness*2)),
 		),
 		float32(borderThickness),
 		rl.Fade(rl.Red, 0.5),
@@ -103,38 +97,35 @@ func (g *GameOfLife) Draw() {
 func (g *GameOfLife) DrawGUI() {
 	rl.DrawText(fmt.Sprintf("FPS: %0.f", rl.GetFPS()), 10, 10, 20, rl.Orange)
 
+	windowWidth := int32(rl.GetScreenWidth())
+	windowHeight := int32(rl.GetScreenHeight())
+
 	if !g.running {
 		if !g.hideMenu {
-			rl.DrawRectangle(0, 0, g.windowWidth, g.windowHeight, rl.Fade(rl.Black, 0.8))
+			rl.DrawRectangle(0, 0, windowWidth, windowHeight, rl.Fade(rl.Black, 0.8))
 			pressStartWidth := rl.MeasureText("Press SPACE to start", 50)
-			rl.DrawText("Press SPACE to start", g.windowWidth/2-pressStartWidth/2, g.windowHeight/2-150, 50, rl.White)
+			rl.DrawText("Press SPACE to start", windowWidth/2-pressStartWidth/2, windowHeight/2-150, 50, rl.White)
 
 			pressCWidth := rl.MeasureText("Press C to clear", 50)
-			rl.DrawText("Press C to clear", g.windowWidth/2-pressCWidth/2, g.windowHeight/2-100, 50, rl.White)
+			rl.DrawText("Press C to clear", windowWidth/2-pressCWidth/2, windowHeight/2-100, 50, rl.White)
 
 			pressRWidth := rl.MeasureText("Press R to randomize", 50)
-			rl.DrawText("Press R to randomize", g.windowWidth/2-pressRWidth/2, g.windowHeight/2-50, 50, rl.White)
+			rl.DrawText("Press R to randomize", windowWidth/2-pressRWidth/2, windowHeight/2-50, 50, rl.White)
 
 			pressHWidth := rl.MeasureText("Press H to toggle menu", 50)
-			rl.DrawText("Press H to toggle menu", g.windowWidth/2-pressHWidth/2, g.windowHeight/2, 50, rl.White)
+			rl.DrawText("Press H to toggle menu", windowWidth/2-pressHWidth/2, windowHeight/2, 50, rl.White)
 
 			pressWWidth := rl.MeasureText("Press W to increase FPS", 50)
-			rl.DrawText("Press W to increase FPS", g.windowWidth/2-pressWWidth/2, g.windowHeight/2+100, 50, rl.White)
+			rl.DrawText("Press W to increase FPS", windowWidth/2-pressWWidth/2, windowHeight/2+100, 50, rl.White)
 
 			pressSWidth := rl.MeasureText("Press S to decrease FPS", 50)
-			rl.DrawText("Press S to decrease FPS", g.windowWidth/2-pressSWidth/2, g.windowHeight/2+150, 50, rl.White)
+			rl.DrawText("Press S to decrease FPS", windowWidth/2-pressSWidth/2, windowHeight/2+150, 50, rl.White)
 		}
 	}
 }
 
 func (g *GameOfLife) GameLoop() {
-	prevMousePos := rl.GetMousePosition()
 	for !rl.WindowShouldClose() {
-		currentMousePos := rl.GetMousePosition()
-
-		g.mouseDelta = rl.Vector2Subtract(prevMousePos, currentMousePos)
-		prevMousePos = currentMousePos
-
 		g.Input()
 		if g.running {
 			g.Update()
@@ -177,7 +168,13 @@ func (g *GameOfLife) Update() {
 
 func (g *GameOfLife) Input() {
 	if rl.IsKeyDown(rl.KeyLeftShift) && rl.IsMouseButtonDown(rl.MouseLeftButton) {
-		g.camera.Target = rl.Vector2Add(g.camera.Target, g.mouseDelta)
+		g.camera.Target = rl.Vector2Add(
+			g.camera.Target,
+			rl.Vector2Scale(
+				rl.GetMouseDelta(),
+				-1/g.camera.Zoom,
+			),
+		)
 	}
 
 	if rl.IsKeyPressed(rl.KeySpace) {
