@@ -77,8 +77,10 @@ func (g *GameOfLife) Draw() {
 	arrayStartX := Max(int(int32(cameraWorld.X)/g.blockSize), 0)
 	arrayStartY := Max(int(int32(cameraWorld.Y)/g.blockSize), 0)
 
-	arrayEndX := Min(int(int32(cameraWorld.X+float32(g.windowWidth))/g.blockSize), g.cols)
-	arrayEndY := Min(int(int32(cameraWorld.Y+float32(g.windowHeight))/g.blockSize), g.rows)
+	arrayEndX := Min(int(int32(cameraWorld.X+float32(g.windowWidth*int32(g.camera.Zoom)))/g.blockSize), g.cols)
+	arrayEndY := Min(int(int32(cameraWorld.Y+float32(g.windowHeight*int32(g.camera.Zoom)))/g.blockSize), g.rows)
+
+	fmt.Println(arrayEndX)
 
 	for y := arrayStartY; y < arrayEndY; y++ {
 		for x := arrayStartX; x < arrayEndX; x++ {
@@ -90,7 +92,8 @@ func (g *GameOfLife) Draw() {
 
 	borderThickness := 6
 	rl.DrawRectangleLinesEx(
-		rl.NewRectangle(-float32(borderThickness),
+		rl.NewRectangle(
+			-float32(borderThickness),
 			-float32(borderThickness),
 			float32(g.windowWidth+int32(borderThickness*2)),
 			float32(g.windowHeight+int32(borderThickness*2)),
@@ -208,7 +211,7 @@ func (g *GameOfLife) Input() {
 	}
 
 	// Handle camera zoom
-	g.camera.Zoom += float32(rl.GetMouseWheelMove()) * 0.1
+	g.camera.Zoom += float32(rl.GetMouseWheelMove()) * 1
 	g.camera.Zoom = MaxFloat32(g.camera.Zoom, 1)
 
 	// Mouse position
