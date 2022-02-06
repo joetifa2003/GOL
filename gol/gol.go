@@ -58,7 +58,7 @@ func NewGame(windowWidth, windowsHeight, blockSize, FPS int) *GameOfLife {
 		hideMenu:     false,
 		FPS:          FPS,
 		camera: rl.Camera2D{
-			Target:   rl.NewVector2(0, 0),
+			Target:   centerOfScreen,
 			Offset:   centerOfScreen,
 			Zoom:     1,
 			Rotation: 0,
@@ -70,7 +70,6 @@ func (g *GameOfLife) Draw() {
 	rl.DrawRectangle(g.mouseCellX*g.blockSize, g.mouseCellY*g.blockSize, g.blockSize, g.blockSize, rl.Fade(rl.Black, 0.75))
 
 	cameraStart := rl.GetScreenToWorld2D(rl.NewVector2(0, 0), g.camera)
-	fmt.Println(cameraStart)
 	cameraEnd := rl.GetScreenToWorld2D(rl.NewVector2(float32(rl.GetScreenWidth()), float32(rl.GetScreenHeight())), g.camera)
 
 	cameraRect := rl.NewRectangle(cameraStart.X, cameraStart.Y, cameraEnd.X, cameraEnd.Y)
